@@ -6,13 +6,20 @@ networks:
 volumes:
   esdata1:
     driver: local
+  esdata2:
+    driver: local
+  esdata3:
+    driver: local
 
 services:
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.1.1
-    container_name: elasticsearch
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
+    container_name: es01
     environment:
-      - discovery.type=single-node
+      - node.name=es01
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es02,es03
+      - cluster.initial_master_nodes=es01,es02,es03
       - bootstrap.memory_lock=true      
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ulimits:
@@ -21,11 +28,60 @@ services:
        hard: -1
     volumes:
      - esdata1:/usr/share/elasticsearch/data
+#    ports:
+#     - 9200:9200
     networks:
       - elk
+
+  es02:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
+    container_name: es02
+    environment:
+      - node.name=es02
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+       soft: -1
+       hard: -1
+
+    volumes:
+     - esdata2:/usr/share/elasticsearch/data
+    ports:
+     - 9201:9201
+    networks:
+      - elk
+
+  es03:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
+    container_name: es03
+    environment:
+      - node.name=es03
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es02
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+       soft: -1
+       hard: -1
+    volumes:
+     - esdata3:/usr/share/elasticsearch/data
+    ports:
+     - 9202:9202
+    networks:
+      - elk
+
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.1.1
+    image: docker.elastic.co/kibana/kibana:7.9.3
     container_name: kibana
+    environment:
+      ELASTICSEARCH_URL: http://es01:9200
+      ELASTICSEARCH_HOSTS: http://es01:9200
     networks:
       - elk
   nginx:

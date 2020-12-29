@@ -29,3 +29,8 @@ sudo htpasswd ./.htpasswd user2
 ```
 ./start.server.sh
 ```
+
+### 4: Exec sh to stop ###
+```
+./stop.server.sh
+```
